@@ -44,3 +44,8 @@ jobs:
           coverage-files: lcov.info
           minimum-coverage: 90
           github-token: ${{ secrets.GITHUB_TOKEN }}
+
+# Superseded PR validation must not hold runner capacity.
+concurrency:
+  group: pr-ci-coverage.yml-${{ github.event_name }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
