@@ -38,7 +38,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: linux-test-project/lcov
-          ref: 31b95298b1cfdd20092f5ed99578f837c8fb864f # v2.0
+          ref: dfeb7505ef372f806ddb280b52a90f41cd8169cd # v1.16; standalone core-Perl LCOV
           path: .ci-tools/lcov
           persist-credentials: false
       - name: Use LCOV without administrator access
