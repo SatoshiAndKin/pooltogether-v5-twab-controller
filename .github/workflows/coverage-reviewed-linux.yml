@@ -34,14 +34,18 @@ jobs:
           source_dir=$(forge config --json | python3 -c 'import json, sys; print(json.load(sys.stdin)["src"])')
           test -d "$source_dir"
           forge build --sizes "$source_dir"
-      - name: Install LCOV
+      - name: Read qualified LCOV source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: linux-test-project/lcov
+          ref: 31b95298b1cfdd20092f5ed99578f837c8fb864f # v2.0
+          path: .ci-tools/lcov
+          persist-credentials: false
+      - name: Use LCOV without administrator access
         shell: bash
         run: |
-          if ! command -v lcov >/dev/null; then
-            sudo -n apt-get update
-            sudo -n apt-get install -y --no-install-recommends lcov
-          fi
-          lcov --version
+          "$GITHUB_WORKSPACE/.ci-tools/lcov/bin/lcov" --version
+          echo "$GITHUB_WORKSPACE/.ci-tools/lcov/bin" >> "$GITHUB_PATH"
       - name: Run all coverage tests and enforce 90 percent
         id: coverage
         shell: bash
