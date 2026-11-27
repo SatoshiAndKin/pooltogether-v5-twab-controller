@@ -1,0 +1,63 @@
+name: Reviewed Linux Foundry coverage
+
+on:
+  workflow_call:
+
+permissions: {}
+
+jobs:
+  forge:
+    name: Foundry project
+    if: github.repository == 'SatoshiAndKin/pooltogether-v5-twab-controller'
+    runs-on:
+      group: ski-ci-public-linux
+      labels: ski-kvm-public-pr
+    permissions:
+      contents: read
+    env:
+      FOUNDRY_PROFILE: default
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          submodules: recursive
+          persist-credentials: false
+      - name: Install qualified Foundry
+        uses: foundry-rs/foundry-toolchain@dba66c27052e63476d886f22216e119ba7e615bf # existing v1
+        with:
+          version: v1.9.0
+      - name: Check production contract sizes
+        id: build
+        shell: bash
+        run: |
+          forge --version
+          source_dir=$(forge config --json | python3 -c 'import json, sys; print(json.load(sys.stdin)["src"])')
+          test -d "$source_dir"
+          forge build --sizes "$source_dir"
+      - name: Install LCOV
+        shell: bash
+        run: |
+          if ! command -v lcov >/dev/null; then
+            sudo -n apt-get update
+            sudo -n apt-get install -y --no-install-recommends lcov
+          fi
+          lcov --version
+      - name: Run all coverage tests and enforce 90 percent
+        id: coverage
+        shell: bash
+        run: |
+          coverage_dir=$(mktemp -d "$RUNNER_TEMP/pooltogether-coverage.XXXXXX")
+          coverage_record="$coverage_dir/lcov.info"
+          coverage_sources="$coverage_dir/sources.info"
+          echo "report=$coverage_sources" >> "$GITHUB_OUTPUT"
+          forge coverage --report lcov --report-file "$coverage_record"
+          source_dir=$(forge config --json | python3 -c 'import json, pathlib, sys; print(pathlib.Path(json.load(sys.stdin)["src"]).resolve().relative_to(pathlib.Path.cwd().resolve()))')
+          lcov --extract "$coverage_record" -o "$coverage_sources" "$source_dir/*"
+          lcov --summary "$coverage_sources" >> "$GITHUB_STEP_SUMMARY"
+          lcov --summary "$coverage_sources" --fail-under-lines 90
+      - name: Preserve the coverage report
+        if: ${{ always() && steps.coverage.outputs.report != '' }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: source-coverage
+          path: ${{ steps.coverage.outputs.report }}
