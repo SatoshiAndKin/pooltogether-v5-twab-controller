@@ -121,7 +121,7 @@ contract ObservationLibTest is BaseTest {
   }
 
   // Outside of range
-  function testFailBinarySearch_OneItem_TargetBefore() public {
+  function testRevertBinarySearch_OneItem_TargetBefore() public {
     uint32[] memory t = new uint32[](1);
     t[0] = 10;
     observationLibMock.populateObservations(t);
@@ -131,6 +131,7 @@ contract ObservationLibTest is BaseTest {
     uint16 cardinality = uint16(t.length);
     uint32 time = 100;
 
+    vm.expectRevert();
     observationLibMock.binarySearch(
       newestObservationIndex,
       oldestObservationIndex,
@@ -166,7 +167,7 @@ contract ObservationLibTest is BaseTest {
   }
 
   // Outside of range
-  function testFailBinarySearch_OneItem_TargetAfter() public {
+  function testRevertBinarySearch_OneItem_TargetAfter() public {
     uint32[] memory t = new uint32[](1);
     t[0] = 10;
     observationLibMock.populateObservations(t);
@@ -176,7 +177,9 @@ contract ObservationLibTest is BaseTest {
     uint16 cardinality = uint16(t.length);
     uint32 time = 100;
 
-    observationLibMock.binarySearch(
+    // The unsupported future target exhausts gas; bound the external call.
+    vm.expectRevert();
+    observationLibMock.binarySearch{gas: 100_000}(
       newestObservationIndex,
       oldestObservationIndex,
       target,
