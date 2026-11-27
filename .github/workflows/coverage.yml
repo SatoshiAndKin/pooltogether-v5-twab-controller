@@ -16,4 +16,4 @@ jobs:
   forge:
     permissions:
       contents: read
-    uses: SatoshiAndKin/pooltogether-v5-twab-controller/.github/workflows/coverage-reviewed-linux.yml@d0dade574531d73aed3a4c4fb55853019ff21fd4
+    uses: SatoshiAndKin/pooltogether-v5-twab-controller/.github/workflows/coverage-reviewed-linux.yml@4a20c58f810bd60c62654a596d80bc4cd86b6a87
